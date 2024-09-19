@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Video SDK Demo</title>
+</head>
+<body>
+    <h1>Interactive Video SDK Demo</h1>
+    <script src="../dist/interactive-video-sdk.js"></script>
+    <script>
+        const sdk = new InteractiveVideoSDK({
+            videos: [
+                { id: 'intro', url: 'https://example.com/intro-video.mp4', title: 'Introduction' },
+                { id: 'demo', url: 'https://example.com/demo-video.mp4', title: 'Product Demo' }
+            ],
+            avatarUrl: 'https://example.com/avatar.jpg',
+            name: 'Yana',
+            interactiveOptions: [
+                { 
+                    id: 'what-is',
+                    text: "What's our product?", 
+                    action: 'playVideo',
+                    payload: 'intro'
+                },
+                { 
+                    id: 'show-demo',
+                    text: "Show me a demo", 
+                    action: 'playVideo',
+                    payload: 'demo'
+                },
+                { 
+                    id: 'visit-website',
+                    text: "Visit our website", 
+                    action: 'openUrl',
+                    payload: 'https://www.example.com'
+                },
+                { 
+                    id: 'chat',
+                    text: "Chat with support", 
+                    action: 'startChat',
+                    payload: "Hi, I'd like to learn more!"
+                }
+            ],
+            position: {
+                vertical: 'bottom',
+                horizontal: 'right',
+                offset: { vertical: 20, horizontal: 20 }
+            },
+            style: {
+                backgroundColor: '#f0f0f0',
+                textColor: '#333333',
+                buttonColor: '#4CAF50',
+                buttonTextColor: '#ffffff',
+                borderRadius: 15,
+                width: 350,
+                height: 450
+            }
+        });
+
+        sdk.show();
+    </script>
+</body>
+</html>

@@ -1,21 +1,20 @@
 {
-    "name": "interactive-video-sdk",
-    "version": "1.0.0",
-    "description": "Interactive Video SDK for web applications",
-    "main": "dist/interactive-video-sdk.js",
-    "types": "dist/types.d.ts",
-    "scripts": {
-      "build": "tsc && rollup -c",
-      "test": "jest"
-    },
-    "author": "Nishant Rawat",
-    "license": "MIT",
-    "devDependencies": {
-      "@types/jest": "^27.0.3",
-      "jest": "^27.4.5",
-      "rollup": "^2.61.1",
-      "rollup-plugin-typescript2": "^0.31.1",
-      "ts-jest": "^27.1.2",
-      "typescript": "^4.5.4"
-    }
+  "name": "interactive-video-sdk",
+  "version": "1.0.0",
+  "description": "Interactive Video SDK for web applications",
+  "main": "dist/interactive-video-sdk.js",
+  "types": "dist/types.d.ts",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w"
+  },
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.5.4",
+    "rollup": "^2.61.1",
+    "rollup-plugin-typescript2": "^0.31.1",
+    "@rollup/plugin-node-resolve": "^13.1.1",
+    "@rollup/plugin-commonjs": "^21.0.1"
   }
+}
