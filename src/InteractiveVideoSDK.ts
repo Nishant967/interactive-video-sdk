@@ -40,6 +40,21 @@ class InteractiveVideoSDK {
     this.optionsContainer = document.createElement('div');
 
     this.init();
+    this.loadVideos();
+  }
+
+  private async loadVideos(): Promise<void> {
+    for (const video of this.videos) {
+      if (typeof video.url === 'string' && !video.url.startsWith('blob:')) {
+        try {
+          const response = await fetch(video.url);
+          const blob = await response.blob();
+          video.url = URL.createObjectURL(blob);
+        } catch (error) {
+          console.error(`Failed to load video ${video.id}:`, error);
+        }
+      }
+    }
   }
 
   private init(): void {
@@ -128,8 +143,12 @@ class InteractiveVideoSDK {
   private playVideo(videoId: string): void {
     const video = this.videos.find(v => v.id === videoId);
     if (video) {
-      this.video.src = video.url;
-      this.video.play();
+      if (typeof video.url === 'string') {
+        this.video.src = video.url;
+      } else if (video.url instanceof Blob) {
+        this.video.src = URL.createObjectURL(video.url);
+      }
+      this.video.play().catch(error => console.error('Error playing video:', error));
       this.currentVideoId = videoId;
     }
   }
@@ -195,7 +214,17 @@ class InteractiveVideoSDK {
   }
 
   public addVideo(video: Video): void {
-    this.videos.push(video);
+    if (typeof video.url === 'string' && !video.url.startsWith('blob:')) {
+      fetch(video.url)
+        .then(response => response.blob())
+        .then(blob => {
+          video.url = URL.createObjectURL(blob);
+          this.videos.push(video);
+        })
+        .catch(error => console.error(`Failed to load video ${video.id}:`, error));
+    } else {
+      this.videos.push(video);
+    }
   }
 
   public removeVideo(videoId: string): void {

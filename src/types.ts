@@ -1,6 +1,6 @@
 export interface Video {
   id: string;
-  url: string;
+  url: string | Blob;  // Can be a string URL or a Blob
   title: string;
 }
 
