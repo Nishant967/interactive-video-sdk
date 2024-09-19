@@ -23,7 +23,7 @@ const sdk = new InteractiveVideoSDK({
     { id: 'demo', url: 'https://example.com/demo-video.mp4', title: 'Product Demo' }
   ],
   avatarUrl: 'https://example.com/avatar.jpg',
-  name: 'Yana',
+  name: 'Nishant',
   interactiveOptions: [
     { 
       id: 'what-is',
