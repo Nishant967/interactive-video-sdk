@@ -4,42 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Video SDK Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .instruction {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <h1>Interactive Video SDK Demo</h1>
+    <p>This page demonstrates the functionality of the Interactive Video SDK. Click the buttons below to interact with the SDK.</p>
+    
+    <button id="showWidget">Show Widget</button>
+    <button id="hideWidget">Hide Widget</button>
+    <button id="addVideo">Add New Video</button>
+    <button id="changeStyle">Change Widget Style</button>
+
+    <div class="instruction">
+        <h2>Resizing the Widget</h2>
+        <p>To resize the widget:</p>
+        <ol>
+            <li>Click the "Show Widget" button if the widget is not visible.</li>
+            <li>Move your cursor to the bottom-right corner of the widget.</li>
+            <li>You should see the cursor change to a resize icon.</li>
+            <li>Click and drag to resize the widget.</li>
+            <li>Release the mouse button when you're satisfied with the new size.</li>
+        </ol>
+    </div>
+
     <script src="../dist/interactive-video-sdk.js"></script>
     <script>
         const sdk = new InteractiveVideoSDK({
             videos: [
-                { id: 'intro', url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', title: 'Introduction' },
-                { id: 'demo', url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', title: 'Product Demo' }
+                { id: 'intro', url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', title: 'Introduction' },
+                { id: 'demo', url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4', title: 'Product Demo' }
             ],
-            avatarUrl: 'https://example.com/avatar.jpg',
-            name: 'Yana',
+            avatarUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg',
+            name: 'Video Assistant',
             interactiveOptions: [
                 { 
-                    id: 'what-is',
-                    text: "What's our product?", 
+                    id: 'watch-intro',
+                    text: "Watch Intro", 
                     action: 'playVideo',
                     payload: 'intro'
                 },
                 { 
-                    id: 'show-demo',
-                    text: "Show me a demo", 
+                    id: 'watch-demo',
+                    text: "Watch Demo", 
                     action: 'playVideo',
                     payload: 'demo'
                 },
                 { 
                     id: 'visit-website',
-                    text: "Visit our website", 
+                    text: "Visit Website", 
                     action: 'openUrl',
                     payload: 'https://www.example.com'
                 },
                 { 
-                    id: 'chat',
-                    text: "Chat with support", 
+                    id: 'contact-us',
+                    text: "Contact Us", 
                     action: 'startChat',
                     payload: "Hi, I'd like to learn more!"
+                },
+                {
+                    id: 'more-options',
+                    text: "More Options",
+                    action: 'changeOptions',
+                    payload: 'set2'
                 }
             ],
             position: {
@@ -55,10 +110,51 @@
                 borderRadius: 15,
                 width: 350,
                 height: 450
-            }
+            },
+            predefinedOptionSets: [
+                ['set2', [
+                    { id: 'back', text: "Back to Main", action: 'changeOptions', payload: 'main' },
+                    { id: 'faq', text: "FAQ", action: 'openUrl', payload: 'https://example.com/faq' }
+                ]]
+            ],
+            apiUrl: 'https://api.example.com/interactive-options'
         });
 
+        // Initialize the widget
         sdk.show();
+
+        // Event listeners for demo buttons
+        document.getElementById('showWidget').addEventListener('click', () => sdk.show());
+        document.getElementById('hideWidget').addEventListener('click', () => sdk.hide());
+        
+        document.getElementById('addVideo').addEventListener('click', () => {
+            sdk.addVideo({
+                id: 'new-video',
+                url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+                title: 'New Video'
+            });
+            sdk.addInteractiveOption({
+                id: 'watch-new',
+                text: "Watch New Video",
+                action: 'playVideo',
+                payload: 'new-video'
+            });
+        });
+
+        document.getElementById('changeStyle').addEventListener('click', () => {
+            sdk.setStyle({
+                backgroundColor: '#e0e0e0',
+                buttonColor: '#2196F3'
+            });
+        });
+
+        // Simulate adding a new option set after 5 seconds
+        setTimeout(() => {
+            sdk.addOptionSet('set3', [
+                { id: 'special-offer', text: "Special Offer", action: 'openUrl', payload: 'https://example.com/offer' },
+                { id: 'back-main', text: "Back to Main", action: 'changeOptions', payload: 'main' }
+            ]);
+        }, 5000);
     </script>
 </body>
 </html>

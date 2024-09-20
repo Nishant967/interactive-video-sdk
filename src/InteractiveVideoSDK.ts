@@ -1,4 +1,4 @@
-import { Video, InteractiveOption, WidgetPosition, WidgetStyle, SDKOptions } from './types';
+import { Video, InteractiveOption, WidgetPosition, WidgetStyle, SDKOptions, OptionSet } from './types';
 
 class InteractiveVideoSDK {
   private container: HTMLElement;
@@ -12,6 +12,13 @@ class InteractiveVideoSDK {
   private videos: Video[];
   private interactiveOptions: InteractiveOption[];
   private currentVideoId: string | null = null;
+  private optionSets: Map<string, InteractiveOption[]>;
+  private apiUrl: string | null;
+  private isResizing: boolean = false;
+  private resizeStartX: number = 0;
+  private resizeStartY: number = 0;
+  private initialWidth: number = 0;
+  private initialHeight: number = 0;
 
   constructor(private options: SDKOptions) {
     this.videos = options.videos;
@@ -32,12 +39,14 @@ class InteractiveVideoSDK {
       ...options.style
     };
 
-    // Initialize DOM elements
     this.container = document.createElement('div');
     this.widget = document.createElement('div');
     this.video = document.createElement('video');
     this.minimizedWidget = document.createElement('div');
     this.optionsContainer = document.createElement('div');
+
+    this.optionSets = new Map(options.predefinedOptionSets || []);
+    this.apiUrl = options.apiUrl || null;
 
     this.init();
     this.loadVideos();
@@ -87,16 +96,18 @@ class InteractiveVideoSDK {
     this.widget.style.display = 'none';
     this.widget.style.overflow = 'hidden';
     this.widget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-
+    this.widget.style.position = 'relative';
+    
     this.createVideo();
     this.createInteractiveOptions();
+    this.createResizeHandle();
     
     this.container.appendChild(this.widget);
   }
 
   private createVideo(): void {
     this.video.style.width = '100%';
-    this.video.style.height = '200px';
+    this.video.style.height = 'calc(100% - 40px)';
     this.video.style.objectFit = 'cover';
     if (this.videos.length > 0) {
       this.playVideo(this.videos[0].id);
@@ -105,9 +116,68 @@ class InteractiveVideoSDK {
   }
 
   private createInteractiveOptions(): void {
-    this.optionsContainer.style.padding = '10px';
+    this.optionsContainer.style.position = 'absolute';
+    this.optionsContainer.style.bottom = '0';
+    this.optionsContainer.style.left = '0';
+    this.optionsContainer.style.width = '100%';
+    this.optionsContainer.style.height = '40px';
+    this.optionsContainer.style.display = 'flex';
+    this.optionsContainer.style.justifyContent = 'space-around';
+    this.optionsContainer.style.alignItems = 'center';
+    this.optionsContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
     this.updateInteractiveOptions();
     this.widget.appendChild(this.optionsContainer);
+  }
+
+  private createResizeHandle(): void {
+    const resizeHandle = document.createElement('div');
+    resizeHandle.style.position = 'absolute';
+    resizeHandle.style.right = '0';
+    resizeHandle.style.bottom = '0';
+    resizeHandle.style.width = '20px';
+    resizeHandle.style.height = '20px';
+    resizeHandle.style.cursor = 'se-resize';
+    resizeHandle.style.background = 'rgba(0, 0, 0, 0.3)';
+    resizeHandle.addEventListener('mousedown', this.startResize);
+    this.widget.appendChild(resizeHandle);
+  }
+
+  private attachEventListeners(): void {
+    this.minimizedWidget.addEventListener('click', () => this.toggleWidget());
+    window.addEventListener('mousemove', this.resize);
+    window.addEventListener('mouseup', this.stopResize);
+  }
+
+  private startResize = (e: MouseEvent): void => {
+    e.preventDefault();
+    this.isResizing = true;
+    this.resizeStartX = e.clientX;
+    this.resizeStartY = e.clientY;
+    this.initialWidth = this.widget.offsetWidth;
+    this.initialHeight = this.widget.offsetHeight;
+  }
+
+  private resize = (e: MouseEvent): void => {
+    if (!this.isResizing) return;
+    const deltaX = e.clientX - this.resizeStartX;
+    const deltaY = e.clientY - this.resizeStartY;
+    const newWidth = Math.max(200, this.initialWidth + deltaX);
+    const newHeight = Math.max(150, this.initialHeight + deltaY);
+    this.widget.style.width = `${newWidth}px`;
+    this.widget.style.height = `${newHeight}px`;
+    this.handleResize();
+  }
+
+  private stopResize = (): void => {
+    this.isResizing = false;
+  }
+
+  private handleResize = (): void => {
+    const newWidth = this.widget.offsetWidth;
+    const newHeight = this.widget.offsetHeight;
+    this.video.style.width = '100%';
+    this.video.style.height = `${newHeight - 40}px`;
+    this.optionsContainer.style.height = '40px';
   }
 
   private updateInteractiveOptions(): void {
@@ -115,11 +185,10 @@ class InteractiveVideoSDK {
     this.interactiveOptions.forEach(option => {
       const button = document.createElement('button');
       button.textContent = option.text;
-      button.style.display = 'block';
-      button.style.width = '100%';
-      button.style.padding = '10px';
-      button.style.margin = '5px 0';
+      button.style.padding = '5px 10px';
       button.style.border = 'none';
+      button.style.borderRadius = '5px';
+      button.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
       button.style.cursor = 'pointer';
       button.onclick = () => this.handleOptionClick(option);
       this.optionsContainer.appendChild(button);
@@ -137,7 +206,40 @@ class InteractiveVideoSDK {
       case 'startChat':
         this.startIntercomChat(option.payload);
         break;
+      case 'changeOptions':
+        this.changeInteractiveOptions(option.payload);
+        break;
     }
+  }
+
+  private async changeInteractiveOptions(optionsId: string): Promise<void> {
+    const newOptions = await this.fetchOptions(optionsId);
+    this.interactiveOptions = newOptions;
+    this.updateInteractiveOptions();
+  }
+
+  private async fetchOptions(optionsId: string): Promise<InteractiveOption[]> {
+    if (this.optionSets.has(optionsId)) {
+      return this.optionSets.get(optionsId)!;
+    }
+
+    if (this.apiUrl) {
+      try {
+        const response = await fetch(`${this.apiUrl}/options/${optionsId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const options: InteractiveOption[] = await response.json();
+        this.optionSets.set(optionsId, options);
+        return options;
+      } catch (error) {
+        console.error('Failed to fetch options:', error);
+        return [];
+      }
+    }
+
+    console.warn(`No options found for ID: ${optionsId}`);
+    return [];
   }
 
   private playVideo(videoId: string): void {
@@ -165,14 +267,12 @@ class InteractiveVideoSDK {
     }
   }
 
-  private attachEventListeners(): void {
-    this.minimizedWidget.addEventListener('click', () => this.toggleWidget());
-  }
-
   private toggleWidget(): void {
     if (this.isMinimized) {
       this.minimizedWidget.style.display = 'none';
       this.widget.style.display = 'block';
+      this.widget.style.width = `${this.style.width}px`;
+      this.widget.style.height = `${this.style.height}px`;
       if (this.currentVideoId) {
         this.playVideo(this.currentVideoId);
       }
@@ -245,6 +345,18 @@ class InteractiveVideoSDK {
   public removeInteractiveOption(optionId: string): void {
     this.interactiveOptions = this.interactiveOptions.filter(o => o.id !== optionId);
     this.updateInteractiveOptions();
+  }
+
+  public addOptionSet(id: string, options: InteractiveOption[]): void {
+    this.optionSets.set(id, options);
+  }
+
+  public removeOptionSet(id: string): void {
+    this.optionSets.delete(id);
+  }
+
+  public setApiUrl(url: string): void {
+    this.apiUrl = url;
   }
 
   public show(): void {

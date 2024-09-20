@@ -1,13 +1,13 @@
 export interface Video {
   id: string;
-  url: string | Blob;  // Can be a string URL or a Blob
+  url: string | Blob;
   title: string;
 }
 
 export interface InteractiveOption {
   id: string;
   text: string;
-  action: 'playVideo' | 'openUrl' | 'startChat';
+  action: 'playVideo' | 'openUrl' | 'startChat' | 'changeOptions';
   payload: string;
 }
 
@@ -30,6 +30,8 @@ export interface WidgetStyle {
   height: number;
 }
 
+export type OptionSet = [string, InteractiveOption[]];
+
 export interface SDKOptions {
   videos: Video[];
   avatarUrl: string;
@@ -37,6 +39,8 @@ export interface SDKOptions {
   interactiveOptions: InteractiveOption[];
   position?: WidgetPosition;
   style?: Partial<WidgetStyle>;
+  predefinedOptionSets?: OptionSet[];
+  apiUrl?: string;
 }
 
 declare global {
