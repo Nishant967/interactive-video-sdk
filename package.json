@@ -6,15 +6,38 @@
   "types": "dist/types.d.ts",
   "scripts": {
     "build": "rollup -c",
-    "dev": "rollup -c -w"
+    "dev": "rollup -c -w",
+    "test": "jest",
+    "lint": "eslint . --ext .ts,.js"
   },
-  "author": "Your Name",
+  "author": "Nishant Rawat",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nishant967/interactive-video-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nishant967/interactive-video-sdk/issues"
+  },
+  "homepage": "https://github.com/nishant967/interactive-video-sdk#readme",
   "devDependencies": {
     "typescript": "^4.5.4",
     "rollup": "^2.61.1",
     "rollup-plugin-typescript2": "^0.31.1",
     "@rollup/plugin-node-resolve": "^13.1.1",
-    "@rollup/plugin-commonjs": "^21.0.1"
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "jest": "^27.4.5",
+    "eslint": "^8.4.1"
+  },
+  "keywords": [
+    "interactive",
+    "video",
+    "sdk",
+    "web",
+    "typescript"
+  ],
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/sponsors/nishant967"
   }
 }

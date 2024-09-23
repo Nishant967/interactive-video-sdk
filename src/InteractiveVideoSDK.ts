@@ -68,6 +68,9 @@ class InteractiveVideoSDK {
     this.loadVideos();
   }
 
+  /**
+   * Loads videos from URLs and converts them to blob URLs.
+   */
   private async loadVideos(): Promise<void> {
     for (const video of this.videos) {
       if (typeof video.url === 'string' && !video.url.startsWith('blob:')) {
@@ -82,6 +85,9 @@ class InteractiveVideoSDK {
     }
   }
 
+  /**
+   * Initializes the SDK by creating necessary elements and attaching event listeners.
+   */
   private init(): void {
     this.createContainer();
     this.createMinimizedWidget();
@@ -92,12 +98,18 @@ class InteractiveVideoSDK {
     this.addDragFunctionality();
   }
 
+  /**
+   * Creates the main container for the widget.
+   */
   private createContainer(): void {
     this.container.style.position = 'fixed';
     this.container.style.zIndex = '9999';
     document.body.appendChild(this.container);
   }
 
+  /**
+   * Creates the minimized version of the widget.
+   */
   private createMinimizedWidget(): void {
     this.minimizedWidget.style.width = '60px';
     this.minimizedWidget.style.height = '60px';
@@ -109,6 +121,9 @@ class InteractiveVideoSDK {
     this.container.appendChild(this.minimizedWidget);
   }
 
+  /**
+   * Creates the expanded version of the widget.
+   */
   private createExpandedWidget(): void {
     this.widget.style.display = 'none';
     this.widget.style.overflow = 'hidden';
@@ -126,6 +141,9 @@ class InteractiveVideoSDK {
     this.container.appendChild(this.widget);
   }
 
+  /**
+   * Creates the video element and its overlay.
+   */
   private createVideo(): void {
     this.videoContainer.style.position = 'relative';
     this.videoContainer.style.width = '100%';
@@ -167,6 +185,9 @@ class InteractiveVideoSDK {
     }
   }
 
+  /**
+   * Creates the controls for the video.
+   */
   private createControls(): void {
     this.controlsContainer.style.position = 'absolute';
     this.controlsContainer.style.top = '0';
@@ -202,6 +223,9 @@ class InteractiveVideoSDK {
     this.videoContainer.appendChild(timeDisplay);
   }
 
+  /**
+   * Creates the close button for the widget.
+   */
   private createCloseButton(): void {
     const closeButton = document.createElement('button');
     closeButton.innerHTML = '&#10005;'; // X icon
@@ -214,6 +238,9 @@ class InteractiveVideoSDK {
     this.videoContainer.appendChild(closeButton);
   }
 
+  /**
+   * Creates the replay button for the widget.
+   */
   private createReplayButton(): void {
     const replayButton = document.createElement('button');
     replayButton.innerHTML = '&#8635;'; // Replay icon
@@ -226,23 +253,30 @@ class InteractiveVideoSDK {
     this.videoContainer.appendChild(replayButton);
   }
 
+  /**
+   * Styles a button with common properties.
+   * @param button - The button to style.
+   */
   private styleButton(button: HTMLButtonElement): void {
-  button.style.background = 'rgba(76, 175, 80, 0.7)'; // Semi-transparent green
-  button.style.color = 'white';
-  button.style.border = 'none';
-  button.style.borderRadius = '50%';
-  button.style.width = '30px';
-  button.style.height = '30px';
-  button.style.fontSize = '16px';
-  button.style.cursor = 'pointer';
-  button.style.display = 'flex';
-  button.style.justifyContent = 'center';
-  button.style.alignItems = 'center';
-  button.style.transition = 'background-color 0.3s';
-  button.onmouseover = () => { button.style.backgroundColor = 'rgba(76, 175, 80, 1)'; };
-  button.onmouseout = () => { button.style.backgroundColor = 'rgba(76, 175, 80, 0.7)'; };
-}
+    button.style.background = 'rgba(76, 175, 80, 0.7)'; // Semi-transparent green
+    button.style.color = 'white';
+    button.style.border = 'none';
+    button.style.borderRadius = '50%';
+    button.style.width = '30px';
+    button.style.height = '30px';
+    button.style.fontSize = '16px';
+    button.style.cursor = 'pointer';
+    button.style.display = 'flex';
+    button.style.justifyContent = 'center';
+    button.style.alignItems = 'center';
+    button.style.transition = 'background-color 0.3s';
+    button.onmouseover = () => { button.style.backgroundColor = 'rgba(76, 175, 80, 1)'; };
+    button.onmouseout = () => { button.style.backgroundColor = 'rgba(76, 175, 80, 0.7)'; };
+  }
 
+  /**
+   * Creates the interactive options for the widget.
+   */
   private createInteractiveOptions(): void {
     this.optionsContainer.style.position = 'absolute';
     this.optionsContainer.style.bottom = '20px';
@@ -255,6 +289,9 @@ class InteractiveVideoSDK {
     this.videoContainer.appendChild(this.optionsContainer);
   }
 
+  /**
+   * Creates the resize handles for the widget.
+   */
   private createResizeHandles(): void {
     const directions = ['n', 'e', 's', 'w', 'ne', 'nw', 'se', 'sw'];
     directions.forEach(direction => {
@@ -302,6 +339,9 @@ class InteractiveVideoSDK {
     });
   }
 
+  /**
+   * Adds drag functionality to the widget.
+   */
   private addDragFunctionality(): void {
     const dragHandle = document.createElement('div');
     dragHandle.style.position = 'absolute';
@@ -316,6 +356,9 @@ class InteractiveVideoSDK {
     this.widget.insertBefore(dragHandle, this.widget.firstChild);
   }
 
+  /**
+   * Attaches event listeners to the widget.
+   */
   private attachEventListeners(): void {
     this.minimizedWidget.addEventListener('click', () => this.toggleWidget());
     document.addEventListener('mousemove', this.resize);
@@ -324,6 +367,9 @@ class InteractiveVideoSDK {
     document.addEventListener('mouseup', this.stopDrag);
   }
 
+  /**
+   * Adds event listeners to the video element.
+   */
   private addVideoEventListeners(): void {
     this.videoContainer.addEventListener('mouseover', () => {
       this.videoOverlay.style.opacity = '1';
@@ -357,18 +403,31 @@ class InteractiveVideoSDK {
     });
   }
 
+  /**
+   * Updates the progress bar based on the video's current time.
+   */
   private updateProgressBar(): void {
     if (this.video.duration) {
       this.progressBar.value = (this.video.currentTime / this.video.duration) * 100;
     }
   }
 
+  /**
+   * Formats time in seconds to a mm:ss string.
+   * @param time - The time in seconds.
+   * @returns The formatted time string.
+   */
   private formatTime(time: number): string {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 
+  /**
+   * Starts the resize operation.
+   * @param e - The mouse event.
+   * @param direction - The direction of the resize.
+   */
   private startResize = (e: MouseEvent, direction: string): void => {
     e.preventDefault();
     this.isResizing = true;
@@ -381,6 +440,10 @@ class InteractiveVideoSDK {
     this.initialTop = this.widget.offsetTop;
   }
 
+  /**
+   * Handles the resize operation.
+   * @param e - The mouse event.
+   */
   private resize = (e: MouseEvent): void => {
     if (!this.isResizing) return;
 
@@ -415,10 +478,16 @@ class InteractiveVideoSDK {
     this.handleResize();
   }
 
+  /**
+   * Stops the resize operation.
+   */
   private stopResize = (): void => {
     this.isResizing = false;
   }
 
+  /**
+   * Handles the resize event.
+   */
   private handleResize = (): void => {
     const newWidth = this.widget.offsetWidth;
     const newHeight = this.widget.offsetHeight;
@@ -426,12 +495,20 @@ class InteractiveVideoSDK {
     this.videoContainer.style.height = '100%';
   }
 
+  /**
+   * Starts the drag operation.
+   * @param e - The mouse event.
+   */
   private startDrag = (e: MouseEvent): void => {
     this.isDragging = true;
     this.dragStartX = e.clientX - this.widget.offsetLeft;
     this.dragStartY = e.clientY - this.widget.offsetTop;
   }
 
+  /**
+   * Handles the drag operation.
+   * @param e - The mouse event.
+   */
   private drag = (e: MouseEvent): void => {
     if (!this.isDragging) return;
     const newLeft = e.clientX - this.dragStartX;
@@ -440,10 +517,16 @@ class InteractiveVideoSDK {
     this.widget.style.top = `${newTop}px`;
   }
 
+  /**
+   * Stops the drag operation.
+   */
   private stopDrag = (): void => {
     this.isDragging = false;
   }
 
+  /**
+   * Updates the interactive options in the widget.
+   */
   private updateInteractiveOptions(): void {
     this.optionsContainer.innerHTML = '';
     this.interactiveOptions.forEach((option, index) => {
@@ -464,6 +547,10 @@ class InteractiveVideoSDK {
     });
   }
 
+  /**
+   * Handles the click event for an interactive option.
+   * @param option - The interactive option that was clicked.
+   */
   private handleOptionClick(option: InteractiveOption): void {
     switch(option.action) {
       case 'playVideo':
@@ -481,12 +568,21 @@ class InteractiveVideoSDK {
     }
   }
 
+  /**
+   * Changes the interactive options based on the provided options ID.
+   * @param optionsId - The ID of the new options to load.
+   */
   private async changeInteractiveOptions(optionsId: string): Promise<void> {
     const newOptions = await this.fetchOptions(optionsId);
     this.interactiveOptions = newOptions;
     this.updateInteractiveOptions();
   }
 
+  /**
+   * Fetches interactive options from the server or predefined sets.
+   * @param optionsId - The ID of the options to fetch.
+   * @returns A promise that resolves to the fetched options.
+   */
   private async fetchOptions(optionsId: string): Promise<InteractiveOption[]> {
     if (this.optionSets.has(optionsId)) {
       return this.optionSets.get(optionsId)!;
@@ -511,6 +607,10 @@ class InteractiveVideoSDK {
     return [];
   }
 
+  /**
+   * Plays the video with the specified ID.
+   * @param videoId - The ID of the video to play.
+   */
   private playVideo(videoId: string): void {
     const video = this.videos.find(v => v.id === videoId);
     if (video) {
@@ -524,6 +624,9 @@ class InteractiveVideoSDK {
     }
   }
 
+  /**
+   * Toggles play/pause state of the video.
+   */
   private togglePlayPause(): void {
     if (this.video.paused) {
       this.video.play().catch(error => console.error('Error playing video:', error));
@@ -532,12 +635,19 @@ class InteractiveVideoSDK {
     }
   }
 
+  /**
+   * Replays the current video.
+   */
   private replayVideo = (): void => {
     if (this.currentVideoId) {
       this.playVideo(this.currentVideoId);
     }
   }
 
+  /**
+   * Starts an Intercom chat with the provided message.
+   * @param message - The message to start the chat with.
+   */
   private startIntercomChat(message: string): void {
     this.hide();
     if (window.Intercom) {
@@ -550,6 +660,9 @@ class InteractiveVideoSDK {
     }
   }
 
+  /**
+   * Toggles the widget between minimized and expanded states.
+   */
   private toggleWidget(): void {
     if (this.isMinimized) {
       this.minimizedWidget.style.display = 'none';
@@ -567,20 +680,32 @@ class InteractiveVideoSDK {
     this.isMinimized = !this.isMinimized;
   }
 
+  /**
+   * Closes the widget and sets the closed state for the session.
+   */
   private closeWidget = (): void => {
     this.hide();
     this.setClosedForSession();
   }
 
+  /**
+   * Sets the closed state for the session.
+   */
   private setClosedForSession(): void {
     sessionStorage.setItem('interactiveVideoWidgetClosed', 'true');
   }
 
+  /**
+   * Applies the position settings to the widget.
+   */
   private applyPosition(): void {
     this.container.style[this.position.vertical] = `${this.position.offset.vertical}px`;
     this.container.style[this.position.horizontal] = `${this.position.offset.horizontal}px`;
   }
 
+  /**
+   * Applies the style settings to the widget.
+   */
   private applyStyle(): void {
     this.widget.style.backgroundColor = this.style.backgroundColor;
     this.widget.style.color = this.style.textColor;
@@ -595,16 +720,28 @@ class InteractiveVideoSDK {
     });
   }
 
+  /**
+   * Sets a new position for the widget.
+   * @param newPosition - The new position settings.
+   */
   public setPosition(newPosition: Partial<WidgetPosition>): void {
     this.position = { ...this.position, ...newPosition };
     this.applyPosition();
   }
 
+  /**
+   * Sets a new style for the widget.
+   * @param newStyle - The new style settings.
+   */
   public setStyle(newStyle: Partial<WidgetStyle>): void {
     this.style = { ...this.style, ...newStyle };
     this.applyStyle();
   }
 
+  /**
+   * Adds a new video to the widget.
+   * @param video - The video to add.
+   */
   public addVideo(video: Video): void {
     if (typeof video.url === 'string' && !video.url.startsWith('blob:')) {
       fetch(video.url)
@@ -619,6 +756,10 @@ class InteractiveVideoSDK {
     }
   }
 
+  /**
+   * Removes a video from the widget.
+   * @param videoId - The ID of the video to remove.
+   */
   public removeVideo(videoId: string): void {
     this.videos = this.videos.filter(v => v.id !== videoId);
     if (this.currentVideoId === videoId) {
@@ -629,38 +770,68 @@ class InteractiveVideoSDK {
     }
   }
 
+  /**
+   * Adds a new interactive option to the widget.
+   * @param option - The interactive option to add.
+   */
   public addInteractiveOption(option: InteractiveOption): void {
     this.interactiveOptions.push(option);
     this.updateInteractiveOptions();
   }
 
+  /**
+   * Removes an interactive option from the widget.
+   * @param optionId - The ID of the option to remove.
+   */
   public removeInteractiveOption(optionId: string): void {
     this.interactiveOptions = this.interactiveOptions.filter(o => o.id !== optionId);
     this.updateInteractiveOptions();
   }
 
+  /**
+   * Adds a new option set to the widget.
+   * @param id - The ID of the option set.
+   * @param options - The options to add.
+   */
   public addOptionSet(id: string, options: InteractiveOption[]): void {
     this.optionSets.set(id, options);
   }
 
+  /**
+   * Removes an option set from the widget.
+   * @param id - The ID of the option set to remove.
+   */
   public removeOptionSet(id: string): void {
     this.optionSets.delete(id);
   }
 
+  /**
+   * Sets the API URL for fetching options.
+   * @param url - The API URL.
+   */
   public setApiUrl(url: string): void {
     this.apiUrl = url;
   }
 
+  /**
+   * Shows the widget.
+   */
   public show(): void {
     if (sessionStorage.getItem('interactiveVideoWidgetClosed') !== 'true') {
       this.container.style.display = 'block';
     }
   }
 
+  /**
+   * Hides the widget.
+   */
   public hide(): void {
     this.container.style.display = 'none';
   }
 
+  /**
+   * Resets the closed state for the session.
+   */
   public resetClosedState(): void {
     sessionStorage.removeItem('interactiveVideoWidgetClosed');
   }
