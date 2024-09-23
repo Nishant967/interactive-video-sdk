@@ -1,11 +1,16 @@
-import { Video, InteractiveOption, WidgetPosition, WidgetStyle, SDKOptions, OptionSet } from './types';
+import { Video, InteractiveOption, WidgetPosition, WidgetStyle, SDKOptions } from './types';
 
 class InteractiveVideoSDK {
   private container: HTMLElement;
   private widget: HTMLElement;
+  private videoContainer: HTMLElement;
   private video: HTMLVideoElement;
+  private videoOverlay: HTMLElement;
+  private playPauseButton: HTMLElement;
   private minimizedWidget: HTMLElement;
   private optionsContainer: HTMLElement;
+  private progressBar: HTMLProgressElement;
+  private controlsContainer: HTMLDivElement;
   private isMinimized: boolean = true;
   private position: WidgetPosition;
   private style: WidgetStyle;
@@ -15,10 +20,16 @@ class InteractiveVideoSDK {
   private optionSets: Map<string, InteractiveOption[]>;
   private apiUrl: string | null;
   private isResizing: boolean = false;
+  private resizeDirection: string = '';
   private resizeStartX: number = 0;
   private resizeStartY: number = 0;
   private initialWidth: number = 0;
   private initialHeight: number = 0;
+  private initialLeft: number = 0;
+  private initialTop: number = 0;
+  private isDragging: boolean = false;
+  private dragStartX: number = 0;
+  private dragStartY: number = 0;
 
   constructor(private options: SDKOptions) {
     this.videos = options.videos;
@@ -34,16 +45,21 @@ class InteractiveVideoSDK {
       buttonColor: '#f0f0f0',
       buttonTextColor: '#000000',
       borderRadius: 10,
-      width: 300,
-      height: 400,
+      width: 350,
+      height: 450,
       ...options.style
     };
 
     this.container = document.createElement('div');
     this.widget = document.createElement('div');
+    this.videoContainer = document.createElement('div');
     this.video = document.createElement('video');
+    this.videoOverlay = document.createElement('div');
+    this.playPauseButton = document.createElement('button');
     this.minimizedWidget = document.createElement('div');
     this.optionsContainer = document.createElement('div');
+    this.progressBar = document.createElement('progress');
+    this.controlsContainer = document.createElement('div');
 
     this.optionSets = new Map(options.predefinedOptionSets || []);
     this.apiUrl = options.apiUrl || null;
@@ -73,6 +89,7 @@ class InteractiveVideoSDK {
     this.attachEventListeners();
     this.applyPosition();
     this.applyStyle();
+    this.addDragFunctionality();
   }
 
   private createContainer(): void {
@@ -97,74 +114,304 @@ class InteractiveVideoSDK {
     this.widget.style.overflow = 'hidden';
     this.widget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
     this.widget.style.position = 'relative';
+    this.widget.style.borderRadius = '10px';
     
     this.createVideo();
+    this.createControls();
     this.createInteractiveOptions();
-    this.createResizeHandle();
+    this.createCloseButton();
+    this.createReplayButton();
+    this.createResizeHandles();
     
     this.container.appendChild(this.widget);
   }
 
   private createVideo(): void {
+    this.videoContainer.style.position = 'relative';
+    this.videoContainer.style.width = '100%';
+    this.videoContainer.style.height = '100%';
+
     this.video.style.width = '100%';
-    this.video.style.height = 'calc(100% - 40px)';
+    this.video.style.height = '100%';
     this.video.style.objectFit = 'cover';
+
+    this.videoOverlay.style.position = 'absolute';
+    this.videoOverlay.style.top = '0';
+    this.videoOverlay.style.left = '0';
+    this.videoOverlay.style.width = '100%';
+    this.videoOverlay.style.height = '100%';
+    this.videoOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
+    this.videoOverlay.style.display = 'flex';
+    this.videoOverlay.style.justifyContent = 'center';
+    this.videoOverlay.style.alignItems = 'center';
+    this.videoOverlay.style.opacity = '0';
+    this.videoOverlay.style.transition = 'opacity 0.3s';
+
+    this.playPauseButton.innerHTML = '&#9658;'; // Play icon
+    this.playPauseButton.style.fontSize = '48px';
+    this.playPauseButton.style.background = 'none';
+    this.playPauseButton.style.border = 'none';
+    this.playPauseButton.style.color = 'white';
+    this.playPauseButton.style.cursor = 'pointer';
+
+    this.videoOverlay.appendChild(this.playPauseButton);
+    this.videoContainer.appendChild(this.video);
+    this.videoContainer.appendChild(this.videoOverlay);
+
+    this.widget.appendChild(this.videoContainer);
+
+    this.addVideoEventListeners();
+
     if (this.videos.length > 0) {
       this.playVideo(this.videos[0].id);
     }
-    this.widget.appendChild(this.video);
   }
+
+  private createControls(): void {
+    this.controlsContainer.style.position = 'absolute';
+    this.controlsContainer.style.top = '0';
+    this.controlsContainer.style.left = '0';
+    this.controlsContainer.style.right = '0';
+    this.controlsContainer.style.height = '4px';
+    this.controlsContainer.style.background = 'rgba(255,255,255,0.3)';
+  
+    const progressIndicator = document.createElement('div');
+    progressIndicator.style.width = '0%';
+    progressIndicator.style.height = '100%';
+    progressIndicator.style.backgroundColor = '#4CAF50';
+    progressIndicator.style.transition = 'width 0.1s';
+    this.controlsContainer.appendChild(progressIndicator);
+  
+    const timeDisplay = document.createElement('div');
+    timeDisplay.style.position = 'absolute';
+    timeDisplay.style.top = '10px';
+    timeDisplay.style.right = '50px'; // Moved to the left to avoid overlap
+    timeDisplay.style.color = 'white';
+    timeDisplay.style.fontSize = '14px';
+    timeDisplay.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
+  
+    this.video.addEventListener('timeupdate', () => {
+      const progress = (this.video.currentTime / this.video.duration) * 100;
+      progressIndicator.style.width = `${progress}%`;
+      const current = this.formatTime(this.video.currentTime);
+      const total = this.formatTime(this.video.duration);
+      timeDisplay.textContent = `${current} / ${total}`;
+    });
+  
+    this.videoContainer.appendChild(this.controlsContainer);
+    this.videoContainer.appendChild(timeDisplay);
+  }
+
+  private createCloseButton(): void {
+    const closeButton = document.createElement('button');
+    closeButton.innerHTML = '&#10005;'; // X icon
+    closeButton.style.position = 'absolute';
+    closeButton.style.top = '10px';
+    closeButton.style.right = '10px';
+    closeButton.style.zIndex = '12';
+    this.styleButton(closeButton);
+    closeButton.addEventListener('click', this.closeWidget);
+    this.videoContainer.appendChild(closeButton);
+  }
+
+  private createReplayButton(): void {
+    const replayButton = document.createElement('button');
+    replayButton.innerHTML = '&#8635;'; // Replay icon
+    replayButton.style.position = 'absolute';
+    replayButton.style.top = '50px'; // Positioned below the close button
+    replayButton.style.right = '10px';
+    replayButton.style.zIndex = '11';
+    this.styleButton(replayButton);
+    replayButton.addEventListener('click', this.replayVideo);
+    this.videoContainer.appendChild(replayButton);
+  }
+
+  private styleButton(button: HTMLButtonElement): void {
+  button.style.background = 'rgba(76, 175, 80, 0.7)'; // Semi-transparent green
+  button.style.color = 'white';
+  button.style.border = 'none';
+  button.style.borderRadius = '50%';
+  button.style.width = '30px';
+  button.style.height = '30px';
+  button.style.fontSize = '16px';
+  button.style.cursor = 'pointer';
+  button.style.display = 'flex';
+  button.style.justifyContent = 'center';
+  button.style.alignItems = 'center';
+  button.style.transition = 'background-color 0.3s';
+  button.onmouseover = () => { button.style.backgroundColor = 'rgba(76, 175, 80, 1)'; };
+  button.onmouseout = () => { button.style.backgroundColor = 'rgba(76, 175, 80, 0.7)'; };
+}
 
   private createInteractiveOptions(): void {
     this.optionsContainer.style.position = 'absolute';
-    this.optionsContainer.style.bottom = '0';
-    this.optionsContainer.style.left = '0';
-    this.optionsContainer.style.width = '100%';
-    this.optionsContainer.style.height = '40px';
+    this.optionsContainer.style.bottom = '20px';
+    this.optionsContainer.style.left = '20px';
+    this.optionsContainer.style.right = '20px';
     this.optionsContainer.style.display = 'flex';
-    this.optionsContainer.style.justifyContent = 'space-around';
-    this.optionsContainer.style.alignItems = 'center';
-    this.optionsContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    this.optionsContainer.style.justifyContent = 'space-between';
+    this.optionsContainer.style.zIndex = '10';
     this.updateInteractiveOptions();
-    this.widget.appendChild(this.optionsContainer);
+    this.videoContainer.appendChild(this.optionsContainer);
   }
 
-  private createResizeHandle(): void {
-    const resizeHandle = document.createElement('div');
-    resizeHandle.style.position = 'absolute';
-    resizeHandle.style.right = '0';
-    resizeHandle.style.bottom = '0';
-    resizeHandle.style.width = '20px';
-    resizeHandle.style.height = '20px';
-    resizeHandle.style.cursor = 'se-resize';
-    resizeHandle.style.background = 'rgba(0, 0, 0, 0.3)';
-    resizeHandle.addEventListener('mousedown', this.startResize);
-    this.widget.appendChild(resizeHandle);
+  private createResizeHandles(): void {
+    const directions = ['n', 'e', 's', 'w', 'ne', 'nw', 'se', 'sw'];
+    directions.forEach(direction => {
+      const handle = document.createElement('div');
+      handle.className = `resize-handle resize-${direction}`;
+      handle.style.position = 'absolute';
+      handle.style.zIndex = '1000';
+
+      switch(direction) {
+        case 'n':
+        case 's':
+          handle.style.left = '0';
+          handle.style.right = '0';
+          handle.style.height = '10px';
+          handle.style.cursor = 'ns-resize';
+          break;
+        case 'e':
+        case 'w':
+          handle.style.top = '0';
+          handle.style.bottom = '0';
+          handle.style.width = '10px';
+          handle.style.cursor = 'ew-resize';
+          break;
+        case 'ne':
+        case 'sw':
+          handle.style.width = '10px';
+          handle.style.height = '10px';
+          handle.style.cursor = 'nesw-resize';
+          break;
+        case 'nw':
+        case 'se':
+          handle.style.width = '10px';
+          handle.style.height = '10px';
+          handle.style.cursor = 'nwse-resize';
+          break;
+      }
+
+      if (direction.includes('n')) handle.style.top = '0';
+      if (direction.includes('e')) handle.style.right = '0';
+      if (direction.includes('s')) handle.style.bottom = '0';
+      if (direction.includes('w')) handle.style.left = '0';
+
+      handle.addEventListener('mousedown', (e) => this.startResize(e, direction));
+      this.widget.appendChild(handle);
+    });
+  }
+
+  private addDragFunctionality(): void {
+    const dragHandle = document.createElement('div');
+    dragHandle.style.position = 'absolute';
+    dragHandle.style.top = '0';
+    dragHandle.style.left = '0';
+    dragHandle.style.right = '0';
+    dragHandle.style.height = '30px';
+    dragHandle.style.cursor = 'move';
+    dragHandle.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+
+    dragHandle.addEventListener('mousedown', this.startDrag);
+    this.widget.insertBefore(dragHandle, this.widget.firstChild);
   }
 
   private attachEventListeners(): void {
     this.minimizedWidget.addEventListener('click', () => this.toggleWidget());
-    window.addEventListener('mousemove', this.resize);
-    window.addEventListener('mouseup', this.stopResize);
+    document.addEventListener('mousemove', this.resize);
+    document.addEventListener('mouseup', this.stopResize);
+    document.addEventListener('mousemove', this.drag);
+    document.addEventListener('mouseup', this.stopDrag);
   }
 
-  private startResize = (e: MouseEvent): void => {
+  private addVideoEventListeners(): void {
+    this.videoContainer.addEventListener('mouseover', () => {
+      this.videoOverlay.style.opacity = '1';
+    });
+
+    this.videoContainer.addEventListener('mouseout', () => {
+      this.videoOverlay.style.opacity = '0';
+    });
+
+    this.playPauseButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.togglePlayPause();
+    });
+
+    this.video.addEventListener('play', () => {
+      this.playPauseButton.innerHTML = '&#10074;&#10074;'; // Pause icon
+    });
+
+    this.video.addEventListener('pause', () => {
+      this.playPauseButton.innerHTML = '&#9658;'; // Play icon
+    });
+
+    this.video.addEventListener('timeupdate', () => {
+      this.updateProgressBar();
+    });
+
+    this.progressBar.addEventListener('click', (e) => {
+      const rect = this.progressBar.getBoundingClientRect();
+      const pos = (e.pageX - rect.left) / this.progressBar.offsetWidth;
+      this.video.currentTime = pos * this.video.duration;
+    });
+  }
+
+  private updateProgressBar(): void {
+    if (this.video.duration) {
+      this.progressBar.value = (this.video.currentTime / this.video.duration) * 100;
+    }
+  }
+
+  private formatTime(time: number): string {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  private startResize = (e: MouseEvent, direction: string): void => {
     e.preventDefault();
     this.isResizing = true;
+    this.resizeDirection = direction;
     this.resizeStartX = e.clientX;
     this.resizeStartY = e.clientY;
     this.initialWidth = this.widget.offsetWidth;
     this.initialHeight = this.widget.offsetHeight;
+    this.initialLeft = this.widget.offsetLeft;
+    this.initialTop = this.widget.offsetTop;
   }
 
   private resize = (e: MouseEvent): void => {
     if (!this.isResizing) return;
+
     const deltaX = e.clientX - this.resizeStartX;
     const deltaY = e.clientY - this.resizeStartY;
-    const newWidth = Math.max(200, this.initialWidth + deltaX);
-    const newHeight = Math.max(150, this.initialHeight + deltaY);
+
+    let newWidth = this.initialWidth;
+    let newHeight = this.initialHeight;
+    let newLeft = this.initialLeft;
+    let newTop = this.initialTop;
+
+    if (this.resizeDirection.includes('e')) newWidth += deltaX;
+    if (this.resizeDirection.includes('s')) newHeight += deltaY;
+    if (this.resizeDirection.includes('w')) {
+      newWidth -= deltaX;
+      newLeft += deltaX;
+    }
+    if (this.resizeDirection.includes('n')) {
+      newHeight -= deltaY;
+      newTop += deltaY;
+    }
+
+    // Enforce minimum size
+    newWidth = Math.max(newWidth, 200);
+    newHeight = Math.max(newHeight, 150);
+
     this.widget.style.width = `${newWidth}px`;
     this.widget.style.height = `${newHeight}px`;
+    this.widget.style.left = `${newLeft}px`;
+    this.widget.style.top = `${newTop}px`;
+
     this.handleResize();
   }
 
@@ -175,21 +422,43 @@ class InteractiveVideoSDK {
   private handleResize = (): void => {
     const newWidth = this.widget.offsetWidth;
     const newHeight = this.widget.offsetHeight;
-    this.video.style.width = '100%';
-    this.video.style.height = `${newHeight - 40}px`;
-    this.optionsContainer.style.height = '40px';
+    this.videoContainer.style.width = '100%';
+    this.videoContainer.style.height = '100%';
+  }
+
+  private startDrag = (e: MouseEvent): void => {
+    this.isDragging = true;
+    this.dragStartX = e.clientX - this.widget.offsetLeft;
+    this.dragStartY = e.clientY - this.widget.offsetTop;
+  }
+
+  private drag = (e: MouseEvent): void => {
+    if (!this.isDragging) return;
+    const newLeft = e.clientX - this.dragStartX;
+    const newTop = e.clientY - this.dragStartY;
+    this.widget.style.left = `${newLeft}px`;
+    this.widget.style.top = `${newTop}px`;
+  }
+
+  private stopDrag = (): void => {
+    this.isDragging = false;
   }
 
   private updateInteractiveOptions(): void {
     this.optionsContainer.innerHTML = '';
-    this.interactiveOptions.forEach(option => {
+    this.interactiveOptions.forEach((option, index) => {
       const button = document.createElement('button');
-      button.textContent = option.text;
-      button.style.padding = '5px 10px';
+      button.textContent = `${String.fromCharCode(65 + index)}. ${option.text}`;
+      button.style.padding = '10px 20px';
       button.style.border = 'none';
-      button.style.borderRadius = '5px';
-      button.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+      button.style.borderRadius = '20px';
+      button.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+      button.style.color = 'white';
       button.style.cursor = 'pointer';
+      button.style.fontSize = '14px';
+      button.style.transition = 'background-color 0.3s';
+      button.onmouseover = () => { button.style.backgroundColor = 'rgba(0, 0, 0, 0.8)'; };
+      button.onmouseout = () => { button.style.backgroundColor = 'rgba(0, 0, 0, 0.6)'; };
       button.onclick = () => this.handleOptionClick(option);
       this.optionsContainer.appendChild(button);
     });
@@ -255,6 +524,20 @@ class InteractiveVideoSDK {
     }
   }
 
+  private togglePlayPause(): void {
+    if (this.video.paused) {
+      this.video.play().catch(error => console.error('Error playing video:', error));
+    } else {
+      this.video.pause();
+    }
+  }
+
+  private replayVideo = (): void => {
+    if (this.currentVideoId) {
+      this.playVideo(this.currentVideoId);
+    }
+  }
+
   private startIntercomChat(message: string): void {
     this.hide();
     if (window.Intercom) {
@@ -282,6 +565,15 @@ class InteractiveVideoSDK {
       this.video.pause();
     }
     this.isMinimized = !this.isMinimized;
+  }
+
+  private closeWidget = (): void => {
+    this.hide();
+    this.setClosedForSession();
+  }
+
+  private setClosedForSession(): void {
+    sessionStorage.setItem('interactiveVideoWidgetClosed', 'true');
   }
 
   private applyPosition(): void {
@@ -360,11 +652,17 @@ class InteractiveVideoSDK {
   }
 
   public show(): void {
-    this.container.style.display = 'block';
+    if (sessionStorage.getItem('interactiveVideoWidgetClosed') !== 'true') {
+      this.container.style.display = 'block';
+    }
   }
 
   public hide(): void {
     this.container.style.display = 'none';
+  }
+
+  public resetClosedState(): void {
+    sessionStorage.removeItem('interactiveVideoWidgetClosed');
   }
 }
 
