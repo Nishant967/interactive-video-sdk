@@ -1,14 +1,19 @@
 {
   "name": "interactive-video-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Interactive Video SDK for web applications",
   "main": "dist/interactive-video-sdk.js",
+  "module": "dist/interactive-video-sdk.esm.js",
   "types": "dist/types.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "test": "jest",
-    "lint": "eslint . --ext .ts,.js"
+    "lint": "eslint . --ext .ts,.js",
+    "release": "standard-version"
   },
   "author": "Nishant Rawat",
   "license": "MIT",
@@ -21,13 +26,15 @@
   },
   "homepage": "https://github.com/nishant967/interactive-video-sdk#readme",
   "devDependencies": {
-    "typescript": "^4.5.4",
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-node-resolve": "^13.1.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "eslint": "^8.4.1",
+    "jest": "^27.4.5",
     "rollup": "^2.61.1",
     "rollup-plugin-typescript2": "^0.31.1",
-    "@rollup/plugin-node-resolve": "^13.1.1",
-    "@rollup/plugin-commonjs": "^21.0.1",
-    "jest": "^27.4.5",
-    "eslint": "^8.4.1"
+    "standard-version": "^9.5.0",
+    "typescript": "^4.5.4"
   },
   "keywords": [
     "interactive",
