@@ -36,6 +36,7 @@ class InteractiveVideoSDK {
   private isDragging: boolean = false;
   private dragStartX: number = 0;
   private dragStartY: number = 0;
+  private videoTimeUpdateCallback: ((currentTime: number, duration: number, videoId: string) => void) | null = null;
 
   /**
    * Creates an instance of InteractiveVideoSDK.
@@ -221,18 +222,18 @@ class InteractiveVideoSDK {
     const timeDisplay = document.createElement('div');
     timeDisplay.style.position = 'absolute';
     timeDisplay.style.top = '10px';
-    timeDisplay.style.right = '50px';
+    timeDisplay.style.left = '10px'; // Moved to the left to avoid overlap with buttons
     timeDisplay.style.color = 'white';
     timeDisplay.style.fontSize = '14px';
     timeDisplay.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
 
     // Update progress and time display during playback
     this.videoElement.addEventListener('timeupdate', () => {
-      const progress = (this.videoElement.currentTime / this.videoElement.duration) * 100;
-      progressIndicator.style.width = `${progress}%`;
-      const current = this.formatTime(this.videoElement.currentTime);
-      const total = this.formatTime(this.videoElement.duration);
-      timeDisplay.textContent = `${current} / ${total}`;
+        const progress = (this.videoElement.currentTime / this.videoElement.duration) * 100;
+        progressIndicator.style.width = `${progress}%`;
+        const current = this.formatTime(this.videoElement.currentTime);
+        const total = this.formatTime(this.videoElement.duration);
+        timeDisplay.textContent = `${current} / ${total}`;
     });
 
     // Seek video on click
@@ -244,7 +245,7 @@ class InteractiveVideoSDK {
 
     this.videoContainer.appendChild(this.controlsContainer);
     this.videoContainer.appendChild(timeDisplay);
-  }
+}
 
   /**
    * Create the close button for the widget.
@@ -259,7 +260,7 @@ class InteractiveVideoSDK {
     this.styleButton(closeButton);
     closeButton.addEventListener('click', this.closeWidget);
     this.videoContainer.appendChild(closeButton);
-  }
+}
 
   /**
    * Create the replay button for the video.
@@ -268,13 +269,13 @@ class InteractiveVideoSDK {
     const replayButton = document.createElement('button');
     replayButton.innerHTML = '&#8635;'; // Replay icon
     replayButton.style.position = 'absolute';
-    replayButton.style.top = '10px';
-    replayButton.style.right = '50px';
+    replayButton.style.top = '50px'; // Positioned below the close button
+    replayButton.style.right = '10px';
     replayButton.style.zIndex = '11';
     this.styleButton(replayButton);
     replayButton.addEventListener('click', this.replayVideo);
     this.videoContainer.appendChild(replayButton);
-  }
+}
 
   /**
    * Style a button with common properties.
@@ -295,7 +296,7 @@ class InteractiveVideoSDK {
     button.style.transition = 'background-color 0.3s';
     button.onmouseover = () => { button.style.backgroundColor = 'rgba(76, 175, 80, 1)'; };
     button.onmouseout = () => { button.style.backgroundColor = 'rgba(76, 175, 80, 0.7)'; };
-  }
+}
 
   /**
    * Create interactive options buttons.
@@ -419,7 +420,14 @@ class InteractiveVideoSDK {
 
     this.videoElement.addEventListener('timeupdate', () => {
       this.updateProgressBar();
-    });
+      if (this.videoTimeUpdateCallback) {
+          this.videoTimeUpdateCallback(
+              this.videoElement.currentTime,
+              this.videoElement.duration,
+              this.currentVideoId || ''
+          );
+      }
+  });
 
     this.videoElement.addEventListener('loadedmetadata', () => {
       if (this.widget.style.display === 'none') {
@@ -682,6 +690,15 @@ class InteractiveVideoSDK {
     }
   }
 
+  
+  /**
+   * Set a callback function to be called on video time updates.
+   * @param callback - The function to call with the current time, duration, and video ID.
+   */
+  public onVideoTimeUpdate(callback: (currentTime: number, duration: number, videoId: string) => void): void {
+    this.videoTimeUpdateCallback = callback;
+  }
+
   /**
    * Start an Intercom chat.
    * @param message - The message to start the chat with.
@@ -744,7 +761,8 @@ class InteractiveVideoSDK {
     this.hide();
     this.stopAllAudio();
     this.setClosedForSession();
-  }
+    this.videoTimeUpdateCallback = null; // Clear the callback
+}
 
   /**
    * Set the widget as closed for the session.
