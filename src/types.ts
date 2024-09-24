@@ -1,22 +1,22 @@
 // Interface representing a video with an ID, URL, and title
 export interface Video {
-  id: string;
+  id: string; // Unique identifier for the video
   url: string | Blob; // URL can be a string or a Blob object
-  title: string;
+  title: string; // Title of the video
 }
 
 // Interface representing an interactive option with an ID, text, action type, and payload
 export interface InteractiveOption {
-  id: string;
-  text: string;
+  id: string; // Unique identifier for the interactive option
+  text: string; // Display text for the option
   action: 'playVideo' | 'openUrl' | 'startChat' | 'changeOptions'; // Enum-like action types
-  payload: string; // Payload associated with the action
+  payload: string; // Payload associated with the action (e.g., video ID or URL)
 }
 
 // Interface representing the position of a widget with vertical and horizontal alignment and offsets
 export interface WidgetPosition {
-  vertical: 'top' | 'bottom';
-  horizontal: 'left' | 'right';
+  vertical: 'top' | 'bottom'; // Vertical alignment of the widget
+  horizontal: 'left' | 'right'; // Horizontal alignment of the widget
   offset: {
     vertical: number; // Vertical offset in pixels
     horizontal: number; // Horizontal offset in pixels
