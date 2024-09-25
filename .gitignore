@@ -1,45 +1,50 @@
+# .gitignore file for ignoring files and directories in a Node.js project
+
 # Dependency directories
-node_modules/
+node_modules/          # Node.js packages
 
 # Build output
-dist/
+dist/                  # Compiled output directory
 
 # TypeScript cache
-*.tsbuildinfo
+*.tsbuildinfo          # TypeScript build info files
 
 # Optional npm cache directory
-.npm
+.npm                   # npm cache
 
 # Optional eslint cache
-.eslintcache
+.eslintcache           # ESLint cache files
 
 # dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env                   # Environment variables
+.env.development.local # Development environment variables
+.env.test.local       # Test environment variables
+.env.production.local  # Production environment variables
+.env.local            # Local environment variables
 
 # Debug log from npm
-npm-debug.log*
+npm-debug.log*        # npm debug logs
 
 # Logs
-logs
-*.log
+logs                   # Application logs
+*.log                  # General log files
 
 # Operating System Files
-.DS_Store
-Thumbs.db
+.DS_Store              # macOS Finder metadata
+Thumbs.db             # Windows thumbnail cache
 
 # IDEs and editors
-.vscode/
-.idea/
-*.swp
-*.swo
-*.sublime-workspace
+.vscode/               # Visual Studio Code settings
+.idea/                 # JetBrains IDE settings
+*.swp                  # Vim swap files
+*.swo                  # Vim swap files
+*.sublime-workspace    # Sublime Text workspace files
 
 # Optional: Uncomment if you're using yarn
-# yarn.lock
+# yarn.lock            # Yarn lock file
 
 # Optional: Uncomment if you don't want to track package-lock.json
-# package-lock.json
+# package-lock.json    # npm lock file
+
+# Ignore npmignore file
+.npmignore             # npm ignore file
